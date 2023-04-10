@@ -5,7 +5,7 @@ function Validator(options) {
         var rules = selectorRules[rule.selector]
         var errorMessage;
         var errorElement = inputElement.parentElement.querySelector(options.errorSelector)
-        for (var i = 0;i<rules.length;i++){
+        for (var i = 0; i < rules.length; i++) {
             errorMessage = rules[i](inputElement.value)
             if (errorMessage) break;
         }
@@ -20,15 +20,18 @@ function Validator(options) {
     }
     var formElement = document.querySelector(options.form)
     if (formElement) {
-        options.rules.forEach(function(){
-            
-        })
-        formElement.onsubmit = function(e){
+        formElement.onsubmit = function (e) {
             e.preventDefault()
+            options.rules.forEach(function (rule) {
+                var inputElement = formElement.querySelector(rule.selector)
+                validate(inputElement, rule)
+            })
         }
+
+
         options.rules.forEach(function (rule) {
             // Lưu lại các rule cho mỗi input
-            if (Array.isArray(selectorRules[rule.selector])){
+            if (Array.isArray(selectorRules[rule.selector])) {
                 selectorRules[rule.selector].push(rule.test)
             }
             else {
@@ -71,19 +74,19 @@ Validator.isEmail = function (selector) {
     }
 }
 
-Validator.checkPass = function (selector,min) {
+Validator.checkPass = function (selector, min) {
     return {
         selector: selector,
         test: function (value) {
-            return value.length >=6 ? undefined : `Vui lòng nhập tối thiểu ${min} kí tự`
+            return value.length >= 6 ? undefined : `Vui lòng nhập tối thiểu ${min} kí tự`
         }
     }
 }
 
-Validator.isConfirmed = function(selector,getConfirm,massage){
+Validator.isConfirmed = function (selector, getConfirm, massage) {
     return {
         selector: selector,
-        test: function(value){
+        test: function (value) {
             return value === getConfirm() ? undefined : massage || "Giá trị nhập lại không chính xác"
         }
     }
