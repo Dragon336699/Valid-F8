@@ -4,9 +4,14 @@ function Validator(options) {
     function validate(inputElement, rule) {
         var rules = selectorRules[rule.selector]
         var errorMessage;
-        var errorElement = inputElement.parentElement.querySelector(options.errorSelector)
+        var errorElement = inputElement.closest(options.formGroupSelector).querySelector(options.errorSelector)
         for (var i = 0; i < rules.length; i++) {
-            errorMessage = rules[i](inputElement.value)
+            switch(inputElement.type){
+                case 'radio':
+                case 'checkbox':
+                    errorMessage = rules[i]
+                default: errorMessage = rules[i](inputElement.value)
+            }
             if (errorMessage) break;
         }
         if (errorMessage) {
@@ -17,18 +22,35 @@ function Validator(options) {
             errorElement.innerHTML = ""
             inputElement.parentElement.classList.remove('invalid')
         }
+        return !errorMessage
     }
     var formElement = document.querySelector(options.form)
     if (formElement) {
         formElement.onsubmit = function (e) {
             e.preventDefault()
+            var isFormValid = true;
             options.rules.forEach(function (rule) {
                 var inputElement = formElement.querySelector(rule.selector)
-                validate(inputElement, rule)
+                var isValid = validate(inputElement, rule)
+                if (!isValid) {
+                    isFormValid = false;
+                }
             })
+            if (isFormValid) {
+                if (typeof options.onSubmit == 'function'){
+                    var enableInputs = formElement.querySelectorAll('[name]')
+                    var formValues = Array.from(enableInputs).reduce(function (values, input) {
+                        values[input.name] = input.value
+                        return values
+                    }, {})
+                    options.onSubmit(formValues)
+                }
+                else {
+                    formElement.submit()
+                }
+
+            }
         }
-
-
         options.rules.forEach(function (rule) {
             // Lưu lại các rule cho mỗi input
             if (Array.isArray(selectorRules[rule.selector])) {
@@ -46,7 +68,7 @@ function Validator(options) {
                 }
                 // Xử lý khi người dùng nhập input
                 inputElement.oninput = function () {
-                    var errorElement = inputElement.parentElement.querySelector(options.errorSelector)
+                    var errorElement = inputElement.closest(options.formGroupSelector).querySelector(options.errorSelector)
                     errorElement.innerHTML = ""
                     inputElement.parentElement.classList.remove('invalid')
                 }
